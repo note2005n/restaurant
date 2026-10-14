@@ -1,15 +1,18 @@
 FROM golang:1.22-alpine AS builder
 
-WORKDIR /src
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY . .
-RUN go mod download
-RUN CGO_ENABLED=0 go build -o /app .
+RUN CGO_ENABLED=0 go build -o main .
 
 FROM alpine:3.20
 WORKDIR /app
-COPY --from=builder /app /app
-COPY templates ./templates
+
+COPY --from=builder /app/main .
+COPY --from=builder /app/templates ./templates
 
 EXPOSE 8080
-CMD ["/app"]
+CMD ["./main"]
